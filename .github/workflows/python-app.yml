@@ -1,0 +1,126 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.png'
+      - '**.jpg'
+      - '**.webp'
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  WORDPRESS_VERSION: "-5.8.2-en_GB"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest coverage
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check ports 1
+      run: |
+        sudo ss -tulpn
+
+    - name: Install server packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y apache2 \
+                                php \
+                                php-bcmath \
+                                php-curl \
+                                php-intl \
+                                php-json \
+                                php-mbstring \
+                                php-mysql \
+                                php-xml \
+                                php-zip
+
+    - name: Check mysql
+      run: |
+        sudo systemctl enable mysql.service
+        sudo systemctl start mysql.service
+        sudo systemctl status mysql.service
+
+    - name: Setup Apache
+      run: |
+        sudo mkdir -p /srv/www
+        sudo chown www-data: /srv/www
+        sudo curl "https://en-gb.wordpress.org/wordpress${{env.WORDPRESS_VERSION}}.tar.gz" | sudo -u www-data tar zx -C /srv/www
+        sudo openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nodes -x509 \
+            -subj "/CN=localhost" \
+            -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
+        sudo cp ssl-params.conf /etc/apache2/conf-available/ssl-params.conf
+        sudo cp wordpress.conf /etc/apache2/sites-available/wordpress.conf
+        sudo a2enmod ssl
+        sudo a2enmod headers
+        sudo a2enmod rewrite
+        sudo a2ensite wordpress
+        sudo a2enconf ssl-params
+        sudo a2dissite 000-default
+        sudo systemctl start apache2
+
+    - name: Setup UFW
+      run: |
+        sudo ufw allow OpenSSH
+        echo =============
+        cat /etc/default/ufw
+        # Default should already be these (cat /etc/default/ufw):
+        sudo ufw default allow outgoing
+        sudo ufw default deny incoming
+        sudo ufw allow 'Apache Full'
+        sudo ufw delete allow 'Apache'
+        sudo echo "y" | sudo ufw enable
+
+    - name: Initialise WordPress and MySQL
+      run: |
+        sudo mysql -uroot -proot < wpdbsetup.sql
+        sudo -u www-data cp wp-config.php /srv/www/wordpress/wp-config.php
+
+    - name: Test TLS Server with cert in situ
+      run: |
+        curl --cacert /etc/ssl/certs/apache-selfsigned.crt https://localhost
+
+    - name: Test TLS Server without a cert
+      run: |
+        curl http://localhost
+
+    - name: Acquire wp_api
+      run: |
+        git clone https://github.com/ployt0/wp_app_api.git
+        cp -r wp_app_api/wp_api img_compressor/
+
+    - name: Test with pytest for coverage
+      run: |
+        cd tests
+        PYTHONPATH=../ss_img_shrinker coverage run --source="../ss_img_shrinker" -m pytest
+
+    - name: Test coverage
+      run: |
+        cd tests
+        PYTHONPATH=../ss_img_shrinker coverage report -m --fail-under=90
+

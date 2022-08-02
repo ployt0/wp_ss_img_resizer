@@ -1,0 +1,25 @@
+{
+  "sql": {
+    "host": "localhost",
+    "user": "wordpressuser232",
+    "password": "galoshes",
+    "database": "wordpress"
+  },
+  "wp_server": {
+    "wp_uploads": "/var/www/html/wp-content/uploads/",
+    "png_q": 32,
+    "webp_mp_to_max_q": {
+      "0": 70,
+      "1": 60,
+      "2": 50,
+      "4": 50
+    },
+    "owner-user": "www-data"
+  },
+  "api": {
+    "host_url": "https://localhost:443",
+    "user": "Fred Test",
+    "password": "IAU8 cEuo eAb9 BNMO bv3N T0jV",
+    "cert_name": "self-signed-cacert.crt"
+  }
+}
