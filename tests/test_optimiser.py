@@ -89,9 +89,11 @@ def test_magick_on_img_replacing(mock_get_file_size, mock_run_shell, mock_split_
     ])
 
 
-def test_get_recorded_mtimes():
+@patch("optimiser.os.path.exists", autospec=True, return_value=True)
+def test_get_recorded_mtimes(mock_exists):
     with patch("builtins.open", mock_open(read_data="path1,384.31\nroot1/path1/file1,41.949\n")) as mocked_open:
         inode_last_mstats = _get_recorded_mtimes()
+    mock_exists.assert_called_once_with(NV_RECORD_PATH)
     mocked_open.assert_called_once_with(NV_RECORD_PATH, "r", newline='')
     assert inode_last_mstats["path1"] == 384.31
     assert inode_last_mstats["root1/path1/file1"] == 41.949
