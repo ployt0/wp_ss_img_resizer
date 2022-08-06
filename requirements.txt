@@ -1,4 +1,5 @@
 pytest
 coverage
+requests
 mysql-connector-python
 phpserialize
