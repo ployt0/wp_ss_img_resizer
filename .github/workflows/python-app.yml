@@ -51,9 +51,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt list --installed | grep php
+        # 57MB uninstall, but needed to get libapache2-mod-php, and reinstall comes to 30MB
         sudo apt purge libapache2-mod-php8.1 libapache2-mod-php php8.1-common php-common
         sudo apt-get install -y apache2 \
-                                php8.1-fpm \
+                                php8.1 \
                                 libapache2-mod-php \
                                 php-bcmath \
                                 php-curl \
