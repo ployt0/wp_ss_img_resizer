@@ -93,11 +93,14 @@ jobs:
         sudo a2enconf ssl-params
         sudo a2dissite 000-default
         sudo systemctl start apache2
+        apachectl -M
         # We're not seeing php module at /etc/apache2/mods-enabled/php, so worry
         sudo systemctl status apache2
         sleep 2
         sudo systemctl status apache2
+        sudo systemctl reload apache2
         sudo systemctl restart apache2
+        apachectl -M
 
     - name: Setup UFW
       run: |
@@ -119,13 +122,13 @@ jobs:
       run: |
         php -v
 
-    - name: Check Apache's php enabled mods
-      run: |
-        cat /etc/apache2/mods-enabled/php*.conf
-
     - name: Check Apache's php available mods
       run: |
         cat /etc/apache2/mods-available/php*.conf
+
+    - name: Check Apache's php enabled mods
+      run: |
+        cat /etc/apache2/mods-enabled/php*.conf
 
     - name: Test TLS Server with cert in situ
       run: |
