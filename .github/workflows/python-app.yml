@@ -93,14 +93,14 @@ jobs:
         sudo a2enconf ssl-params
         sudo a2dissite 000-default
         sudo systemctl start apache2
-        apachectl -M
+        sudo apache2ctl -M
         # We're not seeing php module at /etc/apache2/mods-enabled/php, so worry
         sudo systemctl status apache2
         sleep 2
         sudo systemctl status apache2
         sudo systemctl reload apache2
         sudo systemctl restart apache2
-        apachectl -M
+        sudo apache2ctl -M
 
     - name: Setup UFW
       run: |
