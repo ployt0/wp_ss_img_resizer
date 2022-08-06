@@ -61,17 +61,26 @@ jobs:
                                 php-xml \
                                 php-zip
 
-    - name: Check mysql
+    - name: Check MySQL
       run: |
         sudo systemctl enable mysql.service
         sudo systemctl start mysql.service
         sudo systemctl status mysql.service
 
-    - name: Setup Apache
+    - name: Initialise WordPress and MySQL
       run: |
+        sudo mysql -uroot -proot < wpdbsetup.sql
+        sudo mysql -uroot -proot wordpress < full_db_220727_0953-mariadb.sql
+
         sudo mkdir -p ${{env.DOCUMENT_ROOT}}
         sudo chown www-data: ${{env.DOCUMENT_ROOT}}
-        sudo curl "https://en-gb.wordpress.org/wordpress${{env.WORDPRESS_VERSION}}.tar.gz" | sudo -u www-data tar zx --strip-components=1 -C "${{env.DOCUMENT_ROOT}}"
+        sudo curl "https://en-gb.wordpress.org/wordpress${{env.WORDPRESS_VERSION}}.tar.gz" | sudo -u www-data tar zx --strip-components=1 -C ${{env.DOCUMENT_ROOT}}
+
+        sudo -u www-data cp wp-config.php "${{env.DOCUMENT_ROOT}}/wp-config.php"
+        sudo -u www-data cp wp.htaccess "${{env.DOCUMENT_ROOT}}/.htaccess"
+
+    - name: Setup Apache
+      run: |
         sudo openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nodes -x509 \
             -subj "/CN=localhost" \
             -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
@@ -100,13 +109,6 @@ jobs:
     - name: Check ports 2
       run: |
         sudo ss -tulpn
-
-    - name: Initialise WordPress and MySQL
-      run: |
-        sudo mysql -uroot -proot < wpdbsetup.sql
-        sudo mysql -uroot -proot wordpress < full_db_220727_0953-mariadb.sql
-        sudo -u www-data cp wp-config.php "${{env.DOCUMENT_ROOT}}/wp-config.php"
-        sudo -u www-data cp wp.htaccess "${{env.DOCUMENT_ROOT}}/.htaccess"
 
     - name: Test TLS Server with cert in situ
       run: |
