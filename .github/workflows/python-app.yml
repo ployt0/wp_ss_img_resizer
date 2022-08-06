@@ -110,6 +110,14 @@ jobs:
       run: |
         sudo ss -tulpn
 
+    - name: Check PHP version
+      run: |
+        php -v
+
+    - name: Check Apache confs
+      run: |
+        cat /etc/apache2/mods-enabled/php*.conf
+
     - name: Test TLS Server with cert in situ
       run: |
         curl --cacert /etc/ssl/certs/apache-selfsigned.crt https://localhost
@@ -126,11 +134,19 @@ jobs:
       run: |
         curl -ki https://localhost/index.php?rest_route=/wp/v2/users
 
-    - name: Show sites enabled Server configs
+    - name: Test hello world post is here
+      run: |
+        curl -ki https://localhost/2022/08/hello-world/
+
+    - name: Show sites-enabled apache configs
       run: |
         ls -la /etc/apache2/sites-enabled/
         cat /etc/apache2/sites-enabled/wordpress.conf
         cat "${{env.DOCUMENT_ROOT}}/wp-config.php"
+
+    - name: Show apache config
+      run: |
+        cat /etc/apache2/apache2.conf
 
     - name: Show WP config
       run: |
