@@ -123,6 +123,17 @@ jobs:
       run: |
         curl -ki https://localhost/index.php?rest_route=/wp/v2/users
 
+    - name: Show sites enabled Server configs
+      run: |
+        ls -la /etc/apache2/sites-enabled/
+        cat /etc/apache2/sites-enabled/wordpress.conf
+        cat /srv/www/wordpress/wp-config.php
+
+    - name: Show WP config
+      run: |
+        ls -la /etc/apache2/sites-enabled/
+        cat /etc/apache2/sites-enabled/wordpress.conf
+
     - name: Acquire wp_api
       run: |
         git clone https://github.com/ployt0/wp_app_api.git
