@@ -11,6 +11,7 @@ import csv
 import json
 import os
 import sys
+from pathlib import Path
 from typing import List, Tuple, Any, Dict, Optional, Callable
 
 # print(sys.path)
@@ -88,7 +89,6 @@ class ChangeManager:
         with open(conf_location) as f:
             config = json.load(f)
         if not os.path.exists(config["wp_server"]["wp_uploads"]):
-            from pathlib import Path
             raise FileNotFoundError(
                 "\"{}\", from the config at: \"{}\", does not exist.".format(
                     Path(config["wp_server"]["wp_uploads"]).resolve(),

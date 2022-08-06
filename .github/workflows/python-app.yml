@@ -57,8 +57,14 @@ jobs:
         sudo apt-get install -y apache2 \
                                 php \
                                 libapache2-mod-php \
+                                php-bcmath \
+                                php-curl \
+                                php-intl \
                                 php-json \
-                                php-mysql
+                                php-mbstring \
+                                php-mysql \
+                                php-xml \
+                                php-zip
 
     - name: Initialise WordPress and MySQL
       run: |

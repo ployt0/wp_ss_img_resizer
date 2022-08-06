@@ -21,18 +21,19 @@ class DBHandle:
         self.cursor = self.cnxn.cursor()
 
     def query_all_media(self) -> Dict[str, int]:
+        """Return a map of filenames to post ids."""
         self.cursor.execute(
-            "SELECT * FROM wp_postmeta WHERE meta_key = '_wp_attached_file'")
+            "SELECT meta_value, post_id FROM wp_postmeta WHERE meta_key = '_wp_attached_file'")
         results = self.cursor.fetchall()
-        original_filenames = {x[3]: x[1] for x in results}
+        original_filenames = {x[0]: x[1] for x in results}
         return original_filenames
 
     def query_media_metadata(self) -> List[Tuple[int, Dict]]:
         """Returns a list of 2-tuples of the meta_id and meta_value."""
         self.cursor.execute(
-            "SELECT * FROM wp_postmeta WHERE meta_key = '_wp_attachment_metadata'")
+            "SELECT meta_id, meta_value FROM wp_postmeta WHERE meta_key = '_wp_attachment_metadata'")
         results = self.cursor.fetchall()
-        metadata = [(x[0], cmn.php_unserialize_to_dict(x[3])) for x in results]
+        metadata = [(x[0], cmn.php_unserialize_to_dict(x[1])) for x in results]
         return metadata
 
     def update_metadata(self, post_meta_id, metadata: dict):

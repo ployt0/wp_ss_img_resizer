@@ -63,6 +63,61 @@ def test_change_manager(mock_validate, mock_db_handle):
     mock_validate.assert_called_once_with(sentinel.conf_location)
 
 
+@patch("optimiser.json.load", autospec=True, return_value={
+    "wp_server": {"wp_uploads": sentinel.uploads_dir}})
+@patch("optimiser.os.path.exists", autospec=True, return_value=True)
+def test_validate_config(mock_exists, mock_json_load):
+    fake_instance = Mock()
+    with patch("builtins.open") as mocked_open:
+        config = ChangeManager.validate_config(fake_instance, sentinel.location)
+    mock_exists.assert_called_once_with(sentinel.uploads_dir)
+    mocked_open.assert_called_once_with(sentinel.location)
+    mock_json_load.assert_called_once_with(mocked_open.return_value.__enter__.return_value)
+    assert config == mock_json_load.return_value
+
+
+@patch("optimiser.json.load", autospec=True, return_value={
+    "wp_server": {"wp_uploads": sentinel.uploads_dir}})
+@patch("optimiser.os.path.exists", autospec=True, return_value=False)
+@patch("optimiser.Path", autospec=True)
+def test_validate_config_missing(mock_path, mock_exists, mock_json_load):
+    mock_path.return_value.resolve = Mock(return_value="mock_fullpath")
+    fake_instance = Mock()
+    with pytest.raises(FileNotFoundError) as fnferr:
+        with patch("builtins.open") as mocked_open:
+            ChangeManager.validate_config(fake_instance, sentinel.location)
+        assert "mock_fullpath" in fnferr
+    mock_exists.assert_called_once_with(sentinel.uploads_dir)
+    mocked_open.assert_called_once_with(sentinel.location)
+    mock_json_load.assert_called_once_with(mocked_open.return_value.__enter__.return_value)
+
+
+def test_get_q_webp():
+    fake_instance = Mock()
+    fake_instance.config = {
+        "webp_mp_to_max_q": {
+            0: 60,
+            1: 40,
+            2: 20
+        }
+    }
+    assert ChangeManager.get_q(fake_instance, "webp", 3) == 20
+    assert ChangeManager.get_q(fake_instance, "webp", 2.1) == 20
+    assert ChangeManager.get_q(fake_instance, "webp", 2) == 20
+    assert ChangeManager.get_q(fake_instance, "webp", 1.9) == 40
+    assert ChangeManager.get_q(fake_instance, "webp", 1) == 40
+    assert ChangeManager.get_q(fake_instance, "webp", 0.9) == 60
+
+
+def test_get_q_png():
+    fake_instance = Mock()
+    fake_instance.config = {
+        "png_q": 50
+    }
+    for i in range (30):
+        assert ChangeManager.get_q(fake_instance, "png", i/10) == 50
+
+
 @patch("optimiser.cmn.get_file_group", autospec=True, return_value="mock_group")
 @patch("optimiser.cmn.get_file_owner", autospec=True, return_value="mock_owner")
 @patch("optimiser.cmn.split_fstring_not_args", autospec=True)
