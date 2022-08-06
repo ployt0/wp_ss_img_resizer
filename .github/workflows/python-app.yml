@@ -57,24 +57,13 @@ jobs:
         sudo apt-get install -y apache2 \
                                 php \
                                 libapache2-mod-php \
-                                php-bcmath \
-                                php-curl \
-                                php-intl \
                                 php-json \
-                                php-mbstring \
-                                php-mysql \
-                                php-xml \
-                                php-zip
-
-    - name: Check MySQL
-      run: |
-        # sudo systemctl enable mysql.service
-        # It's disabled by default, use `start` to use it.
-        sudo systemctl start mysql.service
-        # sudo systemctl status mysql.service
+                                php-mysql
 
     - name: Initialise WordPress and MySQL
       run: |
+        # It's disabled by default, use `start` to use it.
+        sudo systemctl start mysql.service
         sudo mysql -uroot -proot < wpdbsetup.sql
         sudo mysql -uroot -proot wordpress < full_db_220727_0953-mariadb.sql
 
@@ -116,11 +105,11 @@ jobs:
       run: |
         php -v
 
-    - name: Test TLS Server with cert in situ
+    - name: Test TLS server with in-situ cert
       run: |
         curl --cacert /etc/ssl/certs/apache-selfsigned.crt https://localhost
 
-    - name: Test TLS Server without a cert
+    - name: Test TLS only server without a cert
       run: |
         curl http://localhost
 
@@ -135,21 +124,6 @@ jobs:
     - name: Test hello world post is here
       run: |
         curl -ki https://localhost/2022/08/hello-world/
-
-    - name: Show sites-enabled apache configs
-      run: |
-        ls -la /etc/apache2/sites-enabled/
-        cat /etc/apache2/sites-enabled/wordpress.conf
-        cat "${{env.DOCUMENT_ROOT}}/wp-config.php"
-
-    - name: Show apache config
-      run: |
-        cat /etc/apache2/apache2.conf
-
-    - name: Show WP config
-      run: |
-        ls -la /etc/apache2/sites-enabled/
-        cat /etc/apache2/sites-enabled/wordpress.conf
 
     - name: Acquire wp_api
       run: |
