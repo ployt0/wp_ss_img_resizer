@@ -88,6 +88,9 @@ jobs:
         sudo cp ssl-params.conf /etc/apache2/conf-available/ssl-params.conf
         sudo cp wordpress.conf /etc/apache2/sites-available/wordpress.conf
         sudo a2enmod ssl
+
+        sudo apache2ctl -M
+
         sudo a2enmod php8.1
         sudo a2enmod headers
         sudo a2enmod rewrite
