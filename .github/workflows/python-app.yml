@@ -100,6 +100,7 @@ jobs:
       run: |
         sudo mysql -uroot -proot < wpdbsetup.sql
         sudo -u www-data cp wp-config.php /srv/www/wordpress/wp-config.php
+        sudo -u www-data cp wp.htaccess /srv/www/wordpress/.htaccess
 
     - name: Test TLS Server with cert in situ
       run: |

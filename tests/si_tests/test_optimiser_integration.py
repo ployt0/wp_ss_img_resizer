@@ -18,6 +18,7 @@ def test_optimiser():
     wp_api = WP_API()
     src_file = "testing-how-it-looked-installed.png"
     response = wp_api.upload_media(src_file)
+    response.raise_for_status()
     jresp = response.json()
     full_served_path = "/var/www/html/wp-content/uploads/{}".format(
         jresp["media_details"]["file"])
