@@ -114,6 +114,10 @@ jobs:
         git clone https://github.com/ployt0/wp_app_api.git
         cp -r wp_app_api/wp_api tests/
 
+    - name: Grab the TLS cert from WP
+      run: |
+        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > tests/self-signed-cacert.crt
+
     - name: Test with pytest for coverage
       run: |
         cd tests
