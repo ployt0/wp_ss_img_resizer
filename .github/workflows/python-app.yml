@@ -51,7 +51,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y apache2 \
-                                php \
+                                php8.1 \
                                 php-bcmath \
                                 php-curl \
                                 php-intl \
@@ -87,6 +87,7 @@ jobs:
         sudo cp ssl-params.conf /etc/apache2/conf-available/ssl-params.conf
         sudo cp wordpress.conf /etc/apache2/sites-available/wordpress.conf
         sudo a2enmod ssl
+        sudo a2enmod php8.1
         sudo a2enmod headers
         sudo a2enmod rewrite
         sudo a2ensite wordpress
