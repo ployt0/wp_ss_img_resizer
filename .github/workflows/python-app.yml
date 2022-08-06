@@ -53,9 +53,9 @@ jobs:
         sudo apt list --installed | grep php
         # 57MB purge, but necessary to get libapache2-mod-php, and reinstall
         # comes to 30MB if choosing php8.1-fpm, or 24.3MB for php8.1.
-        sudo apt purge libapache2-mod-php8.1 libapache2-mod-php php8.1-common php-common
-        sudo apt-get remove -y apache2 \
-                                php \
+        sudo apt remove libapache2-mod-php8.1 libapache2-mod-php php8.1-common php-common
+        sudo apt-get install -y apache2 \
+                                php8.1 \
                                 libapache2-mod-php \
                                 php-bcmath \
                                 php-curl \
@@ -111,29 +111,9 @@ jobs:
         sudo ufw delete allow 'Apache'
         sudo echo "y" | sudo ufw enable
 
-    - name: Check ports 2
-      run: |
-        sudo ss -tulpn
-
     - name: Check PHP version
       run: |
         php -v
-
-    - name: Check Apache's available mods
-      run: |
-        ls -l /etc/apache2/mods-available/
-
-    - name: Check Apache's enabled mods
-      run: |
-        ls -l /etc/apache2/mods-enabled/
-
-    - name: Check Apache's available php mods
-      run: |
-        cat /etc/apache2/mods-available/php*.conf
-
-    - name: Check Apache's enabled php mods
-      run: |
-        cat /etc/apache2/mods-enabled/php*.conf
 
     - name: Test TLS Server with cert in situ
       run: |
