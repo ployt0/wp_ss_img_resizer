@@ -15,8 +15,8 @@ on:
     branches: [ master ]
 
 env:
-  DOCUMENT_ROOT: "/var/www/html"
   WORDPRESS_VERSION: "-5.8.2-en_GB"
+  DOCUMENT_ROOT: "/var/www/html"
 
 jobs:
   build:
@@ -69,9 +69,9 @@ jobs:
 
     - name: Setup Apache
       run: |
-        sudo mkdir -p "${{env:DOCUMENT_ROOT}}"
-        sudo chown www-data: "${{env:DOCUMENT_ROOT}}"
-        sudo curl "https://en-gb.wordpress.org/wordpress${{env.WORDPRESS_VERSION}}.tar.gz" | sudo -u www-data tar zx --strip-components=1 -C "${{env:DOCUMENT_ROOT}}"
+        sudo mkdir -p ${{env.DOCUMENT_ROOT}}
+        sudo chown www-data: ${{env.DOCUMENT_ROOT}}
+        sudo curl "https://en-gb.wordpress.org/wordpress${{env.WORDPRESS_VERSION}}.tar.gz" | sudo -u www-data tar zx --strip-components=1 -C "${{env.DOCUMENT_ROOT}}"
         sudo openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nodes -x509 \
             -subj "/CN=localhost" \
             -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
@@ -105,8 +105,8 @@ jobs:
       run: |
         sudo mysql -uroot -proot < wpdbsetup.sql
         sudo mysql -uroot -proot wordpress < full_db_220727_0953-mariadb.sql
-        sudo -u www-data cp wp-config.php "${{env:DOCUMENT_ROOT}}/wp-config.php"
-        sudo -u www-data cp wp.htaccess "${{env:DOCUMENT_ROOT}}/.htaccess"
+        sudo -u www-data cp wp-config.php "${{env.DOCUMENT_ROOT}}/wp-config.php"
+        sudo -u www-data cp wp.htaccess "${{env.DOCUMENT_ROOT}}/.htaccess"
 
     - name: Test TLS Server with cert in situ
       run: |
@@ -128,7 +128,7 @@ jobs:
       run: |
         ls -la /etc/apache2/sites-enabled/
         cat /etc/apache2/sites-enabled/wordpress.conf
-        cat "${{env:DOCUMENT_ROOT}}/wp-config.php"
+        cat "${{env.DOCUMENT_ROOT}}/wp-config.php"
 
     - name: Show WP config
       run: |
