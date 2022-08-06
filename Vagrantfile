@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
   config.vm.box_version = LOCKED_JAMMY_VERSION
   config.vm.box_check_update = false
-  config.vm.hostname = "wp_img_rescaler"
+  config.vm.hostname = "img-rescaler"
   config.vm.network :forwarded_port, guest: 80, host: 8382
   config.vm.network :forwarded_port, guest: 443, host: 8542
   config.vm.network :forwarded_port, guest: 22, host: 8214, id: 'ssh'
