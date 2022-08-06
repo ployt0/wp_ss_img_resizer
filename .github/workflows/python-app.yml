@@ -10,12 +10,13 @@ on:
       - '**.png'
       - '**.jpg'
       - '**.webp'
+      - '**Vagrantfile'
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
 env:
-  WORDPRESS_VERSION: "-5.8.2-en_GB"
+  WORDPRESS_VERSION: "-6.0.1-en_GB"
   DOCUMENT_ROOT: "/var/www/html"
 
 jobs:
