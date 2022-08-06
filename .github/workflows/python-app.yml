@@ -99,6 +99,7 @@ jobs:
     - name: Initialise WordPress and MySQL
       run: |
         sudo mysql -uroot -proot < wpdbsetup.sql
+        sudo mysql -uroot -proot wordpress < full_db_220727_0953-mariadb.sql
         sudo -u www-data cp wp-config.php /srv/www/wordpress/wp-config.php
         sudo -u www-data cp wp.htaccess /srv/www/wordpress/.htaccess
 
