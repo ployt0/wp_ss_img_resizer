@@ -112,7 +112,7 @@ jobs:
     - name: Acquire wp_api
       run: |
         git clone https://github.com/ployt0/wp_app_api.git
-        cp -r wp_app_api/wp_api img_compressor/
+        cp -r wp_app_api/wp_api tests/
 
     - name: Test with pytest for coverage
       run: |
