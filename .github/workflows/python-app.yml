@@ -50,17 +50,6 @@ jobs:
     - name: Install server packages
       run: |
         sudo apt-get update
-
-        echo -e "\e[96m Installing apache  \e[39m"
-        sudo apt-get -y install apache2
-
-        INSTALL_PHP_VER=${1:-8.1}
-
-        echo -e "\e[96m Installing php - ${INSTALL_PHP_VER} \e[39m"
-        sudo apt-get -y install "php${INSTALL_PHP_VER}-cli" "libapache2-mod-php${INSTALL_PHP_VER}"
-
-        echo -e "\e[96m Installing php extensions \e[39m"
-
         sudo apt list --installed | grep php
         sudo apt-get install -y apache2 \
                                 php8.1 \
