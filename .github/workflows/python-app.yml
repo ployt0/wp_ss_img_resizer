@@ -51,7 +51,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt list --installed | grep php
-#        sudo apt purge libapache2-mod-php7.0 libapache2-mod-php
         sudo apt-get install -y apache2 \
                                 php8.1 \
                                 php-bcmath \
