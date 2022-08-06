@@ -96,6 +96,10 @@ jobs:
         sudo ufw delete allow 'Apache'
         sudo echo "y" | sudo ufw enable
 
+    - name: Check ports 2
+      run: |
+        sudo ss -tulpn
+
     - name: Initialise WordPress and MySQL
       run: |
         sudo mysql -uroot -proot < wpdbsetup.sql
@@ -110,6 +114,14 @@ jobs:
     - name: Test TLS Server without a cert
       run: |
         curl http://localhost
+
+    - name: Test REST API ignoring cert
+      run: |
+        curl -ki https://localhost/wp-json/wp/v2/users
+
+    - name: Test fudged API ignoring cert
+      run: |
+        curl -ki https://localhost/index.php?rest_route=/wp/v2/users
 
     - name: Acquire wp_api
       run: |
