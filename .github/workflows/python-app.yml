@@ -51,9 +51,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt list --installed | grep php
+        sudo apt purge libapache2-mod-php8.1 libapache2-mod-php php8.1-common php-common
         sudo apt-get install -y apache2 \
+                                php8.1-fpm \
                                 libapache2-mod-php \
-                                php \
                                 php-bcmath \
                                 php-curl \
                                 php-intl \
@@ -128,11 +129,19 @@ jobs:
       run: |
         php -v
 
-    - name: Check Apache's php available mods
+    - name: Check Apache's available mods
+      run: |
+        ls -l /etc/apache2/mods-available/
+
+    - name: Check Apache's enabled mods
+      run: |
+        ls -l /etc/apache2/mods-enabled/
+
+    - name: Check Apache's available php mods
       run: |
         cat /etc/apache2/mods-available/php*.conf
 
-    - name: Check Apache's php enabled mods
+    - name: Check Apache's enabled php mods
       run: |
         cat /etc/apache2/mods-enabled/php*.conf
 
