@@ -1,4 +1,4 @@
-# WP Server Side Image Optimiser
+# WordPress Server Side Image Optimiser
 
 ![python-app workflow](https://github.com/ployt0/wp_ss_img_resizer/actions/workflows/python-app.yml/badge.svg)
 
