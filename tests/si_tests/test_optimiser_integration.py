@@ -14,9 +14,20 @@ def setup_module(module):
     # wp_api.delete_all_my("media")
 
 
-def test_optimiser():
+@pytest.mark.parametrize("src_file", [
+    ("Dr_IJsbrand_van_Diemerbroeck.png"),
+    ("filestats.png"),
+    ("pierre-lemos-hippo-q90.webp"),
+])
+def test_optimiser(src_file):
+    """
+    This will not work with jpegs. I haven't investigated improving jpeg
+    compression with imagemagick. I've tried treating them as webp and that
+    works somewhat. You'd need to update all the SQL to change file names
+    and mime types. Also, I only overwrite scaled files if I can get better
+    compression with this script. That could mean some are jpeg and some webp.
+    """
     wp_api = WP_API()
-    src_file = "testing-how-it-looked-installed.png"
     response = wp_api.upload_media(src_file)
     response.raise_for_status()
     jresp = response.json()
@@ -24,7 +35,9 @@ def test_optimiser():
         jresp["media_details"]["file"])
     original_szs = {v["file"]: v["filesize"]
                     for k,v in jresp["media_details"]["sizes"].items()
-                    if k not in ["thumbnail", "full"]}
+                    if k not in ["full"]}
+    original_szs[os.path.basename(full_served_path)] =\
+        jresp["media_details"]["filesize"]
     uploads_sub = Path(full_served_path).parent.resolve()
     original_mtimes = {f: os.stat(os.path.join(uploads_sub, f)).st_mtime
                        for f in original_szs.keys()}
@@ -34,6 +47,7 @@ def test_optimiser():
     with ChangeManager("config.json") as optimiser:
         optimiser.check_all_uploads()
     for fl_nm in original_szs.keys():
+        # This is assuming we shrank *every* scaled copy!
         assert os.stat(os.path.join(uploads_sub, fl_nm)).st_mtime >\
                original_mtimes[fl_nm]
         assert cmn.get_file_size(os.path.join(uploads_sub, fl_nm)) <\
@@ -47,11 +61,12 @@ def test_optimiser():
     new_sizes = {f: cmn.get_file_size(os.path.join(uploads_sub, f))
                  for f in original_szs.keys()}
     for k,v in jresp3["media_details"]["sizes"].items():
-        if k not in ["thumbnail", "full"]:
+        if k not in ["full"]:
             assert v["filesize"] < \
                    jresp2["media_details"]["sizes"][k]["filesize"]
             assert v["filesize"] == new_sizes[v["file"]]
             jresp2["media_details"]["sizes"][k]["filesize"] = v["filesize"]
+    jresp2["media_details"]["filesize"] = jresp3["media_details"]["filesize"]
     assert jresp3 == jresp2
 
 

@@ -18,6 +18,7 @@ from typing import List, Tuple, Any, Dict, Optional, Callable
 
 import common_funcs as cmn
 from db_wrapper import DBHandle
+from scaler import ImgScaler
 
 NV_RECORD_PATH = "latest_mods.csv"
 
@@ -83,6 +84,15 @@ class ChangeManager:
                    " {src_img} {dest_img}",
             "webp": "convert -strip -resize {w}x{h} -define webp:method=6 "
                     "-quality {q} {src_img} {dest_img}"
+        }
+        self.thumbnail_cmds = {
+            "png": "convert -strip -resize {w1}x{h1} -colors {q}"
+                   " -gravity center -extent {w}x{h}"
+                   " {src_img} {dest_img}",
+            "webp": "convert -strip -resize {w1}x{h1} -define webp:method=6 "
+                    "-quality {q} "
+                    "-gravity center -extent {w}x{h} "
+                    "{src_img} {dest_img}"
         }
 
     def validate_config(self, conf_location: str):
@@ -166,15 +176,24 @@ class ChangeManager:
         """
         latest_mtime = 0
         for label, resize in metadata["sizes"].items():
-            if label == "thumbnail":
-                continue  # this uses a different algo, and is tiny
+            # "full" is never a label under "sizes".
             abs_out_name = os.path.join(
                 self.root_dir, subfolder, resize["file"])
             f_str_vars["w"] = resize["width"]
             f_str_vars["h"] = resize["height"]
             f_str_vars["dest_img"] = abs_out_name
-            new_fl_sz = _magick_on_img(
-                f_str_vars, self.scaling_cmds[extension])
+            if label == "thumbnail":
+                scaler = ImgScaler(metadata["width"],
+                                   metadata["height"])
+                w1, h1 = scaler.get_uncropped_thumb(resize["width"],
+                                                    resize["height"])
+                f_str_vars["w1"] = w1
+                f_str_vars["h1"] = h1
+                new_fl_sz = _magick_on_img(
+                    f_str_vars, self.thumbnail_cmds[extension])
+            else:
+                new_fl_sz = _magick_on_img(
+                    f_str_vars, self.scaling_cmds[extension])
             if new_fl_sz is not None:
                 metadata["sizes"][label]["filesize"] = new_fl_sz
                 latest_mtime = os.stat(abs_out_name).st_mtime

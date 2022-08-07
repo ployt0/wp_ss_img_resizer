@@ -73,7 +73,7 @@ def test_get_widths_and_heights_202207(source_size, expected_dims):
 ])
 def test_get_widths_and_heights_v5_3(source_size, expected_dims):
     """
-    Thought (2560,1920) was used but apparently not:
+    Thought (2560,1920) would be used, but apparently not:
 
 testswhite_300x400.png
 testswhite_4000x3000-1024x768.png
@@ -87,6 +87,7 @@ testswhite_4000x3000.png
     widths_and_heights = combined_widths_and_heights(*source_size)
     assert widths_and_heights == expected_dims
 
+
 @pytest.mark.parametrize("decimal,integer", [
     (0.5, 1),
     (1.5, 2),
@@ -96,6 +97,7 @@ testswhite_4000x3000.png
 ])
 def test_ResolutionsList_round_halves_up(decimal,integer):
     assert ResolutionsList.round(decimal) == integer
+
 
 @pytest.mark.parametrize("decimal,integer", [
     (0.499, 0),
@@ -109,4 +111,39 @@ def test_ResolutionsList_round_halves_up(decimal,integer):
 ])
 def test_ResolutionsList_round(decimal,integer):
     assert ResolutionsList.round(decimal) == integer
+
+
+@pytest.mark.parametrize("src_w,src_h,expected_thmb_dims", [
+    (100, 100, None),
+    (149, 149, None),
+    (150, 150, (150, 150)),
+    (151, 151, (150, 150)),
+    (100, 150, (100, 150)),
+    (100, 250, (100, 150)),
+    (150, 100, (150, 100)),
+    (250, 100, (150, 100)),
+])
+def test_get_thumbnail(src_w,src_h,expected_thmb_dims):
+    scaler = ImgScaler(src_w, src_h)
+    thmb_dims = scaler.get_thumbnail(150, 150)
+    assert thmb_dims == expected_thmb_dims
+
+
+@pytest.mark.parametrize("src_w,src_h,expected_interim_dims", [
+    (100, 100, None),
+    (149, 149, None),
+    (150, 150, (150, 150)),
+    (151, 151, (150, 150)),
+    (100, 150, (100, 150)),
+    (100, 250, (100, 250)),
+    (100, 750, (100, 750)),
+    (150, 100, (150, 100)),
+    (250, 100, (250, 100)),
+    (750, 100, (750, 100)),
+])
+def test_get_uncropped_thumb(src_w,src_h,expected_interim_dims):
+    scaler = ImgScaler(src_w, src_h)
+    interim_dims = scaler.get_uncropped_thumb(150, 150)
+    assert interim_dims == expected_interim_dims
+
 

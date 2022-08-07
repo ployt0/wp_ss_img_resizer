@@ -1,5 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Any, Dict, Optional
 
 DimsList = List[Tuple[int, int]]
 
@@ -50,7 +50,7 @@ class ImgScaler:
         self.thumb_h = thumb_h
 
     def get_widths_and_heights(self) -> \
-            Tuple[DimsList, Tuple[int, int]]:
+            Tuple[DimsList, Optional[Tuple[int, int]]]:
         """
         :return: 2-tuple of generated sizes and a separate thumbnail size, if
             applicable, because that is zoom cropped unlike the rest.
@@ -73,20 +73,50 @@ class ImgScaler:
         # add_scaled_size_bounded_by(w_hs, src_w, src_h, 2560, 2560)
         return sorted(w_hs), thmb
 
-    def get_thumbnail(self, thumb_w: int, thumb_h: int):
-        if self.src_w >= thumb_w or self.src_h >= thumb_h:
-            # This, thumbnail, is the only cropping transform (by default).
-            # The other size all scale instead.
-            if self.src_w < thumb_w and self.src_h < thumb_h:
-                return
-            if self.src_w < thumb_w:
-                thumb_w = self.src_w
-            if self.src_h < thumb_h:
-                thumb_h = self.src_h
-            return thumb_w, thumb_h
+    def get_thumbnail(self, thumb_w: int, thumb_h: int) -> Optional[Tuple[int, int]]:
+        """
+        Thumbnail, is the only cropping transform (by default).
+        The other size all just scale proportionally.
+
+        :param thumb_w: desired thumbnail width
+        :param thumb_h: desired thumbnail height
+        :return: typically the desired dimensions.
+        """
+        if self.src_w < thumb_w and self.src_h < thumb_h:
+            return
+        final_thumb_w = min(thumb_w, self.src_w)
+        final_thumb_h = min(thumb_h, self.src_h)
+        return final_thumb_w, final_thumb_h
+
+    def get_uncropped_thumb(self, final_thumb_w: int, final_thumb_h: int) -> Optional[Tuple[int, int]]:
+        """
+        The uncropped thumbnail is the intermediate size with one (or two if
+        square) dimension resized to the thumbnail and the other one larger,
+        in need of cropping.
+
+        :param final_thumb_w: desired thumbnail width
+        :param final_thumb_h: desired thumbnail height
+        """
+        if self.src_w < final_thumb_w and self.src_h < final_thumb_h:
+            return
+        if self.src_w <= final_thumb_w or self.src_h <= final_thumb_h:
+            # One is smaller than thumb already, no scaling needed.
+            w1 = self.src_w
+            h1 = self.src_h
+        else:
+            w_over = float(self.src_w) / final_thumb_w
+            h_over = float(self.src_h) / final_thumb_h
+            constraint = min(w_over, h_over)
+            w1 = ResolutionsList.round(self.src_w / constraint)
+            h1 = ResolutionsList.round(self.src_h / constraint)
+        return w1, h1
 
     def add_scaled_size_bounded_by(
             self, w_hs: ResolutionsList, max_w: int, max_h: int):
+        """
+        Adds a the largest scaled down size that has neither width greater
+        than max_w nor height greater than max_h.
+        """
         if self.src_w > max_w or self.src_h > max_h:
             w_over = float(self.src_w) / max_w
             h_over = float(self.src_h) / max_h

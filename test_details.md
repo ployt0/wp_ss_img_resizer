@@ -10,7 +10,7 @@
 
 More tests to follow. The single SI test is enough to see this
 running. It's coverage is amazing considering how few lines it contains.
-Ideally I'd use [PyBehave](https://pypi.org/project/behave/1.2.6/) instead,
+Ideally I'd use [PyBehave](https://pypi.org/project/behave/1.2.6/)
 for its expressiveness.
 
 

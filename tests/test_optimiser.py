@@ -118,6 +118,79 @@ def test_get_q_png():
         assert ChangeManager.get_q(fake_instance, "png", i/10) == 50
 
 
+@patch("optimiser.os.stat", autospec=True)
+@patch("optimiser.os.walk", autospec=True, return_value=[
+    ("sentinel/root/folder1", None, ["f1.png", "f2.webp", "f3.txt"]),
+    ("sentinel/root/folder2", None, []),
+    ("sentinel/root/folder3", None, ["f4.png", "f5.webp", "f6.txt"]),
+])
+def test_stat_all_imgs(mock_walk, mock_stat):
+    mock_stat.return_value.st_mtime = sentinel.mtime
+    fake_instance = Mock()
+    fake_instance.root_dir = "sentinel/root/"
+    img_mtimes = ChangeManager.stat_all_imgs(fake_instance)
+    assert img_mtimes == {
+        "folder1": {
+            "f1.png": sentinel.mtime,
+            "f2.webp": sentinel.mtime,
+        },
+        "folder3": {
+            "f4.png": sentinel.mtime,
+            "f5.webp": sentinel.mtime,
+        },
+    }
+    mock_walk.assert_called_once_with(fake_instance.root_dir)
+
+
+@patch("optimiser._magick_on_img", side_effect=[25775, 9394])
+@patch("optimiser.os.stat", autospec=True)
+@patch("optimiser.ImgScaler", autospec=True)
+@patch("optimiser.DBHandle", autospec=True)
+@patch("optimiser.ChangeManager.validate_config",
+       return_value={
+           "wp_server": {
+               "wp_uploads": "sentinel.uploads_dir"
+           },
+           "sql": sentinel.sql,
+       })
+def test_try_improve_downscales(mock_validate, mock_db_handle, mock_scaler, mock_stat, mock_magick):
+    optimiser = ChangeManager(sentinel.conf_location)
+    sample_metadata = {
+        'width': 530, 'height': 583,
+        'file': '2022/08/f1.png',
+        'filesize': 38543,
+        'sizes': {
+            'medium': {
+                'file': 'f1-273x300.png', 'width': 273, 'height': 300, 'mime-type': 'image/png', 'filesize': 30432},
+            'thumbnail': {
+                'file': 'f1-150x150.png', 'width': 150, 'height': 150, 'mime-type': 'image/png', 'filesize': 10172}
+        }}
+    sample_fstr_vars = {
+        'q': 32,
+        'src_img': '/any/old/path/uploads/2022/08/f1.png',
+        'dest_img': None
+    }
+    extension = "png"
+    mock_scaler.return_value.get_uncropped_thumb = Mock(return_value=(150,150))
+    mock_stat.return_value.st_mtime = sentinel.mtime
+
+    res_mtime = optimiser.try_improve_downscales(
+        extension, sample_fstr_vars, sample_metadata, '2022/08')
+
+    mock_magick.assert_has_calls([
+        call(sample_fstr_vars, optimiser.scaling_cmds[extension]),
+        call(sample_fstr_vars, optimiser.thumbnail_cmds[extension]),
+    ])
+    mock_scaler.assert_called_once_with(530, 583)
+    mock_scaler.return_value.get_uncropped_thumb.assert_called_once_with(
+        150,150)
+    mock_stat.assert_has_calls([
+        call('{}/2022/08/f1-273x300.png'.format("sentinel.uploads_dir")),
+        call('{}/2022/08/f1-150x150.png'.format("sentinel.uploads_dir"))
+    ])
+    assert res_mtime == sentinel.mtime
+
+
 @patch("optimiser.cmn.get_file_group", autospec=True, return_value="mock_group")
 @patch("optimiser.cmn.get_file_owner", autospec=True, return_value="mock_owner")
 @patch("optimiser.cmn.split_fstring_not_args", autospec=True)

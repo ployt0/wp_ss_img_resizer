@@ -125,3 +125,10 @@ inside of a certain directory and not recursively, inside its subdirectories.
 A common solution is to begin inotify on the subdirectories. I don't like this;
 it creates a race. Point in time polling isn't busy waiting if it is infrequent.
 
+## Images used in testing:
+
+![Dr_IJsbrand_van_Diemerbroeck.png](tests/Dr_IJsbrand_van_Diemerbroeck.png)
+
+![filestats.png](tests/filestats.png)
+
+![pierre-lemos-hippo-q90.webp](tests/pierre-lemos-hippo-q90.webp)
