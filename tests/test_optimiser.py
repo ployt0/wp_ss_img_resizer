@@ -2,7 +2,8 @@ from unittest.mock import patch, sentinel, Mock, mock_open, call
 
 import pytest
 
-from optimiser import process_args, _magick_on_img, ChangeManager, _get_recorded_mtimes, _save_recorded_mtimes, NV_RECORD_PATH
+from optimiser import process_args, _magick_on_img, ChangeManager,\
+    _get_recorded_mtimes, _save_recorded_mtimes, NV_RECORD_PATH, _get_disk_sizes
 
 
 def test_parse_args_for_monitoring_help():
@@ -59,6 +60,12 @@ def test_change_manager(mock_validate, mock_db_handle):
            }
     assert optimiser.root_dir == sentinel.uploads_dir
     assert optimiser.db == mock_db_handle.return_value
+    assert sorted(optimiser.scaling_cmds.keys()) == \
+           sorted(["png", "jpg", "jpeg", "webp"])
+    assert sorted(optimiser.noresize_cmds.keys()) == \
+           sorted(["png", "jpg", "jpeg", "webp"])
+    assert sorted(optimiser.thumbnail_cmds.keys()) == \
+           sorted(["png", "jpg", "jpeg", "webp"])
     mock_db_handle.assert_called_once_with(sentinel.sql)
     mock_validate.assert_called_once_with(sentinel.conf_location)
 
@@ -142,6 +149,20 @@ def test_stat_all_imgs(mock_walk, mock_stat):
     mock_walk.assert_called_once_with(fake_instance.root_dir)
 
 
+@pytest.fixture
+def sample_metadata():
+    return {
+        'width': 530, 'height': 583,
+        'file': '2022/08/f1.png',
+        'filesize': 38543,
+        'sizes': {
+            'medium': {
+                'file': 'f1-273x300.png', 'width': 273, 'height': 300, 'mime-type': 'image/png', 'filesize': 30432},
+            'thumbnail': {
+                'file': 'f1-150x150.png', 'width': 150, 'height': 150, 'mime-type': 'image/png', 'filesize': 10172}
+        }}
+
+
 @patch("optimiser._magick_on_img", side_effect=[25775, 9394])
 @patch("optimiser.os.stat", autospec=True)
 @patch("optimiser.ImgScaler", autospec=True)
@@ -153,18 +174,8 @@ def test_stat_all_imgs(mock_walk, mock_stat):
            },
            "sql": sentinel.sql,
        })
-def test_try_improve_downscales(mock_validate, mock_db_handle, mock_scaler, mock_stat, mock_magick):
+def test_try_improve_downscales(mock_validate, mock_db_handle, mock_scaler, mock_stat, mock_magick, sample_metadata):
     optimiser = ChangeManager(sentinel.conf_location)
-    sample_metadata = {
-        'width': 530, 'height': 583,
-        'file': '2022/08/f1.png',
-        'filesize': 38543,
-        'sizes': {
-            'medium': {
-                'file': 'f1-273x300.png', 'width': 273, 'height': 300, 'mime-type': 'image/png', 'filesize': 30432},
-            'thumbnail': {
-                'file': 'f1-150x150.png', 'width': 150, 'height': 150, 'mime-type': 'image/png', 'filesize': 10172}
-        }}
     sample_fstr_vars = {
         'q': 32,
         'src_img': '/any/old/path/uploads/2022/08/f1.png',
@@ -215,6 +226,11 @@ def test_magick_on_img_replacing(mock_get_file_size, mock_run_shell, mock_split_
         call(["sudo", "mv", tmp_name, final_destination]),
         call(["sudo", "chown", "mock_owner:mock_group", final_destination]),
     ])
+
+
+def test_get_disk_sizes(sample_metadata):
+    disk_sizes = _get_disk_sizes(sample_metadata)
+    assert sum(disk_sizes.values()) == 38543 + 30432 + 10172
 
 
 @patch("optimiser.os.path.exists", autospec=True, return_value=True)

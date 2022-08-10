@@ -68,32 +68,38 @@ def _save_recorded_mtimes(recorded_mtimes: Dict[str, float]) -> None:
             ad_writer.writerow([fl_nm, last_m])
 
 
+def _get_disk_sizes(metadata):
+    disk_sizes = {}
+    for label, resize in metadata["sizes"].items():
+        disk_sizes[label] = metadata["sizes"][label]["filesize"]
+    disk_sizes["full"] = metadata["filesize"]
+    return disk_sizes
+
+
 class ChangeManager:
     def __init__(self, conf_location: str):
         config = self.validate_config(conf_location)
         self.config = config["wp_server"]
         self.root_dir = self.config["wp_uploads"]
         self.db = DBHandle(config["sql"])
-        self.noresize_cmds = {
-            "png": "convert -strip -colors {q} {src_img} {dest_img}",
-            "webp": "convert -strip -define webp:method=6 -quality {q}"
-                    " {src_img} {dest_img}"
-        }
         self.scaling_cmds = {
+            "jpg": "convert -strip -resize {w}x{h} -quality {q}%"
+                   " -interlace Plane -gaussian-blur 0.05 "
+                   "{src_img} {dest_img}",
             "png": "convert -strip -resize {w}x{h} -colors {q}"
                    " {src_img} {dest_img}",
             "webp": "convert -strip -resize {w}x{h} -define webp:method=6 "
                     "-quality {q} {src_img} {dest_img}"
         }
-        self.thumbnail_cmds = {
-            "png": "convert -strip -resize {w1}x{h1} -colors {q}"
-                   " -gravity center -extent {w}x{h}"
-                   " {src_img} {dest_img}",
-            "webp": "convert -strip -resize {w1}x{h1} -define webp:method=6 "
-                    "-quality {q} "
-                    "-gravity center -extent {w}x{h} "
-                    "{src_img} {dest_img}"
-        }
+        self.scaling_cmds["jpeg"] = self.scaling_cmds["jpg"]
+        self.noresize_cmds = {k: v.replace(" -resize {w}x{h}", "")
+                              for k, v in self.scaling_cmds.items()}
+
+        self.thumbnail_cmds = {k: v.replace(
+            " -resize {w}x{h}", " -resize {w1}x{h1}").replace(
+            " {src_img}", " -gravity center -extent {w}x{h} {src_img}")
+            for k, v in self.scaling_cmds.items()}
+
 
     def validate_config(self, conf_location: str):
         with open(conf_location) as f:
@@ -149,6 +155,9 @@ class ChangeManager:
                 f_str_vars["src_img"] = os.path.join(
                     self.root_dir, rel_path_to_file)
                 f_str_vars["q"] = self.get_q(extension, megapix)
+
+                disk_sizes_0 = _get_disk_sizes(metadata)
+
                 latest_mtime: float = self.try_improve_downscales(
                     extension, f_str_vars, metadata, subfolder)
 
@@ -160,9 +169,15 @@ class ChangeManager:
                         f_str_vars["src_img"]).st_mtime)
                     metadata["filesize"] = new_sz
                 if latest_mtime > 0:
+                    disk_sizes_1 = _get_disk_sizes(metadata)
                     recorded_mtimes[rel_path_to_file] = latest_mtime
                     any_change = True
                     self.db.update_metadata(img_facts["id"], metadata)
+                    # A print, potentially for logging.
+                    print("Shrank {}kb to {}kb, re-scaling {}".format(
+                        round(sum(disk_sizes_0.values()) / 1024),
+                        round(sum(disk_sizes_1.values()) / 1024),
+                        file_nm))
 
         if any_change:
             self.db.cnxn.commit()
@@ -216,7 +231,11 @@ class ChangeManager:
         if extension == "png":
             return self.config["png_q"]
         max_q = 10
-        for mp, q in sorted(self.config["webp_mp_to_max_q"].items()):
+        if extension == "webp":
+            sorted_q = sorted(self.config["webp_mp_to_max_q"].items())
+        else:
+            sorted_q = sorted(self.config["jpg_mp_to_max_q"].items())
+        for mp, q in sorted_q:
             if float(mp) > src_mp:
                 break
             max_q = q
@@ -234,7 +253,8 @@ class ChangeManager:
             subfolder = folder[len(self.root_dir):]
             img_mtimes[subfolder] = {
                 f: os.stat(os.path.join(folder, f)).st_mtime
-                for f in files if f.split(".")[-1] in ["png", "webp"]
+                for f in files if f.split(".")[-1] in [
+                    "png", "webp", "jpg", "jpeg"]
             }
         return img_mtimes
 
@@ -263,6 +283,12 @@ Uses config.json:
       "2": 50,
       "4": 50
     },
+    "jpg_mp_to_max_q": {
+      "0": 70, 
+      "1": 60, 
+      "2": 50,
+      "4": 50
+    },
   }
 }
 
@@ -270,8 +296,7 @@ Uses config.json:
 "webp_mp_to_max_q": Map of MP sizes from which quality is set. These are bottom
 bounds, only key "0" is required. Images use the quality of the next key
 smaller than their MP.
-# "webm_q_upto_2MP": webp quality upto 2MP (FHD).
-# "webm_q_over_2MP": webp quality when images over 2MP (FHD).
+"jpg_mp_to_max_q": is the jpeg equivalent of "webp_mp_to_max_q".
 """)
     parser.add_argument(
         "-c", "--config_file",

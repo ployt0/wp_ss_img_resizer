@@ -72,6 +72,12 @@ Two keys are required by the optimiser.py script; "sql" and "wp_server":
       "1": 60, 
       "2": 50,
       "4": 50
+    },
+    "jpg_mp_to_max_q": {
+      "0": 70, 
+      "1": 60, 
+      "2": 50,
+      "4": 50
     }
   }
 }
@@ -127,8 +133,18 @@ it creates a race. Point in time polling isn't busy waiting if it is infrequent.
 
 ## Images used in testing:
 
+An unusual png:
+
 ![Dr_IJsbrand_van_Diemerbroeck.png](tests/Dr_IJsbrand_van_Diemerbroeck.png)
+
+A typical screengrab png (cropped for brevity):
 
 ![filestats.png](tests/filestats.png)
 
+A jpg photo saved in q90 webp format to minimise loss and size:
+
 ![pierre-lemos-hippo-q90.webp](tests/pierre-lemos-hippo-q90.webp)
+
+A typical jpg photo:
+
+![grue_en_vol.jpg](tests/grue_en_vol.jpg)

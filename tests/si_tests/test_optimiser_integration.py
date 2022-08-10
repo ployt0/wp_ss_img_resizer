@@ -11,22 +11,16 @@ import common_funcs as cmn
 
 def setup_module(module):
     wp_api = WP_API()
-    # wp_api.delete_all_my("media")
+    wp_api.delete_all_my("media")
 
 
 @pytest.mark.parametrize("src_file", [
     ("Dr_IJsbrand_van_Diemerbroeck.png"),
     ("filestats.png"),
+    ("grue_en_vol.jpg"),
     ("pierre-lemos-hippo-q90.webp"),
 ])
 def test_optimiser(src_file):
-    """
-    This will not work with jpegs. I haven't investigated improving jpeg
-    compression with imagemagick. I've tried treating them as webp and that
-    works somewhat. You'd need to update all the SQL to change file names
-    and mime types. Also, I only overwrite scaled files if I can get better
-    compression with this script. That could mean some are jpeg and some webp.
-    """
     wp_api = WP_API()
     response = wp_api.upload_media(src_file)
     response.raise_for_status()
@@ -53,19 +47,20 @@ def test_optimiser(src_file):
         assert cmn.get_file_size(os.path.join(uploads_sub, fl_nm)) <\
                original_szs[fl_nm]
 
-    # Checkt that we updated the SQL to include the new sizes and
-    # nothing else changed:
     response3 = wp_api.get("media/{}".format(jresp["id"]))
     assert response3.ok
     jresp3 = response3.json()
     new_sizes = {f: cmn.get_file_size(os.path.join(uploads_sub, f))
                  for f in original_szs.keys()}
+    # Check that we updated the SQL to include the new sizes:
     for k,v in jresp3["media_details"]["sizes"].items():
         if k not in ["full"]:
             assert v["filesize"] < \
                    jresp2["media_details"]["sizes"][k]["filesize"]
             assert v["filesize"] == new_sizes[v["file"]]
             jresp2["media_details"]["sizes"][k]["filesize"] = v["filesize"]
+
+    # Check nothing else changed:
     jresp2["media_details"]["filesize"] = jresp3["media_details"]["filesize"]
     assert jresp3 == jresp2
 
