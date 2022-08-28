@@ -23,13 +23,17 @@ jobs:
   build:
 
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - name: Set up ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
@@ -44,16 +48,12 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Check ports 1
-      run: |
-        sudo ss -tulpn
-
     - name: Install server packages
       run: |
         sudo apt-get update
         sudo apt list --installed | grep php
-        # 57MB purge, but necessary to get libapache2-mod-php, and reinstall
-        # comes to 30MB if choosing php8.1-fpm, or 24.3MB for php8.1.
+        # 57MB purge, but necessary to get libapache2-mod-php. Reinstallation
+        # consumes 30MB if choosing php8.1-fpm, or 24.3MB for php8.1.
         sudo apt purge libapache2-mod-php8.1 libapache2-mod-php php8.1-common php-common
         sudo apt-get install -y apache2 \
                                 php \
@@ -120,11 +120,11 @@ jobs:
       run: |
         curl http://localhost
 
-    - name: Test REST API ignoring cert
+    - name: Test REST API, ignoring cert
       run: |
         curl -ki https://localhost/wp-json/wp/v2/users
 
-    - name: Test fudged API ignoring cert
+    - name: Test fudged API, ignoring cert
       run: |
         curl -ki https://localhost/index.php?rest_route=/wp/v2/users
 
