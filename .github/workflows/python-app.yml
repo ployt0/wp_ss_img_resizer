@@ -114,11 +114,15 @@ jobs:
 
     - name: Test TLS server with in-situ cert
       run: |
-        curl --cacert /etc/ssl/certs/apache-selfsigned.crt https://localhost
+        curl -i --cacert /etc/ssl/certs/apache-selfsigned.crt https://localhost
 
     - name: Test TLS only server without a cert
       run: |
-        curl http://localhost
+        curl -i http://localhost
+
+    - name: Test TLS only server without a cert, following redirection
+      run: |
+        curl -iL http://localhost
 
     - name: Test REST API, ignoring cert
       run: |
