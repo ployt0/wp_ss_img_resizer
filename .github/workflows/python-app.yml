@@ -122,7 +122,9 @@ jobs:
 
     - name: Test TLS only server without a cert, following redirection
       run: |
-        curl -iL http://localhost
+        if curl -iL http://localhost; then
+          exit 1
+        fi
 
     - name: Test REST API, ignoring cert
       run: |
