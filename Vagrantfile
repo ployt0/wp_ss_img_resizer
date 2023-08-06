@@ -49,7 +49,7 @@ SHELL
 
   config.vm.provision "Setup Apache", type: "shell", inline: <<-SHELL
 openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nodes -x509 \
-    -subj "/CN=localhost" \
+    -subj "/CN=localhost" -addext "subjectAltName = DNS:localhost" \
     -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
 a2enmod ssl
 a2enmod headers
