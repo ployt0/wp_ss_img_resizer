@@ -164,7 +164,7 @@ jobs:
     - name: Test with pytest for coverage
       run: |
         cd tests
-        PYTHONPATH=../ss_img_shrinker coverage xml --source="../ss_img_shrinker" -m pytest
+        PYTHONPATH=../ss_img_shrinker coverage run --source="../ss_img_shrinker" -m pytest
 
     - name: Test coverage
       run: |
