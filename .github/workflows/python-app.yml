@@ -4,6 +4,11 @@
 name: Python application
 
 on:
+  workflow_dispatch:
+    inputs:
+      wp_version:
+        description: Version of WordPress
+        default: "-6.2.2-en_GB"
   push:
     paths-ignore:
       - '**.md'
@@ -14,6 +19,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+     - cron: "0 0 * * FRI"
 
 env:
   WORDPRESS_VERSION: "-6.0.1-en_GB"
@@ -26,10 +33,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Set the variables
+      env:
+        DEFAULT_WP_VERSION: "-6.2.2-en_GB"
+      run: |
+        echo "WORDPRESS_VERSION=${{ github.event.inputs.wp_version || env.DEFAULT_WP_VERSION }}" >> $GITHUB_ENV
+
     - name: Set up ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -84,7 +98,7 @@ jobs:
     - name: Setup Apache
       run: |
         sudo openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -days 365 -nodes -x509 \
-            -subj "/CN=localhost" \
+            -subj "/CN=localhost" -addext "subjectAltName = DNS:localhost" \
             -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
         sudo cp ssl-params.conf /etc/apache2/conf-available/ssl-params.conf
         sudo cp wordpress.conf /etc/apache2/sites-available/wordpress.conf
