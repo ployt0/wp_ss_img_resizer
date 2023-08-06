@@ -164,11 +164,12 @@ jobs:
     - name: Test with pytest for coverage
       run: |
         cd tests
-        PYTHONPATH=../ss_img_shrinker coverage run --source="../ss_img_shrinker" -m pytest
+        PYTHONPATH=../ss_img_shrinker coverage xml --source="../ss_img_shrinker" -m pytest
 
     - name: Test coverage
       run: |
-        coverage report -m --fail-under=90
+        cd tests
+        PYTHONPATH=../ss_img_shrinker coverage report -m --fail-under=90
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
