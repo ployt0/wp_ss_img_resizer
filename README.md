@@ -1,6 +1,6 @@
 # WordPress Server Side Image Optimiser
 
-![python-app workflow](https://github.com/ployt0/wp_ss_img_resizer/actions/workflows/python-app.yml/badge.svg)
+![python-app workflow](https://github.com/ployt0/wp_ss_img_resizer/actions/workflows/python-app.yml/badge.svg) [![codecov](https://codecov.io/github/ployt0/wp_ss_img_resizer/branch/master/graph/badge.svg?token=SI9XJOYAXJ)](https://codecov.io/github/ployt0/wp_ss_img_resizer)
 
 Uses imagemagick to scale and save images more efficiently than WordPress.
 
